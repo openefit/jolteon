@@ -26,6 +26,9 @@ const electron = require('electron-connect').server.create()
 const electronPackager = require('gulp-atom-electron')
 const symdest = require('gulp-symdest')
 const zip = require('gulp-vinyl-zip')
+const sourcemaps = require('gulp-sourcemaps')
+const plumber = require('gulp-plumber')
+const less = require('gulp-less')
 
 const electronVersion = require('electron-prebuilt/package.json').version
 
@@ -50,17 +53,20 @@ gulp.task('build-client-bundles', (done) => {
   })
 })
 
-gulp.task('build-client-scss', (done) => {
-  glob('./app/scss/*.scss', (err, files) => {
+gulp.task('build-client-less', (done)=>{
+  glob('./app/less/*.less', (err, files) => {
     if (err) done(err)
 
     let tasks = files.map((entry) => {
       return gulp.src(entry)
-        .pipe(sass())
-        .pipe(rename({
-          dirname: 'css'
-        }))
-        .pipe(gulp.dest('./build'))
+          .pipe(sourcemaps.init())
+          .pipe(plumber())
+          .pipe(less())
+          .pipe(sourcemaps.write('./maps'))
+          .pipe(rename({
+            dirname: 'css'
+          }))
+          .pipe(gulp.dest('./build'))
     })
 
     es.merge(tasks).on('end', done)
